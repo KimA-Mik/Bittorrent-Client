@@ -16,5 +16,10 @@ private fun decodeString(bencodedString: String): String {
 
 private fun decodeNumber(bencodedString: String): Long {
     val endIndex = bencodedString.indexOfFirst { it == 'e' }
-    return bencodedString.substring(1, endIndex).toLong()
+    val numberSubstring = bencodedString.substring(1, endIndex)
+
+    if (numberSubstring.length > 1 && numberSubstring[0] == '0') throw NumberFormatException()
+    if (numberSubstring.startsWith("-0")) throw NumberFormatException()
+
+    return numberSubstring.toLong()
 }
