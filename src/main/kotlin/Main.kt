@@ -14,7 +14,8 @@ fun main(args: Array<String>) {
 }
 
 fun decode(encoded: String) {
+    val bencode = Bencode()
     val gson = Gson()
-    val decoded = decodeBencode(encoded)
+    val decoded = bencode.decodeBencode(encoded)
     println(gson.toJson(decoded))
 }
