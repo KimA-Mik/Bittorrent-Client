@@ -36,6 +36,9 @@ class BencodeKtTest {
     }
 
     @Test
+    fun `decode empty list`() = bencodeListEquals(expected = emptyList(), decoded = bencode.decodeBencode("le"))
+
+    @Test
     fun `decode nested list`() {
         var expected = listOf<DecodingResult>(
             listResultOf(
@@ -49,6 +52,45 @@ class BencodeKtTest {
             DecodingResult.NumberResult(5)
         )
         bencodeListEquals(expected, bencode.decodeBencode("lli4eei5ee"))
+    }
+
+    @Test
+    fun `decode dictionary`() {
+        val expected = sortedMapOf(
+            comparator = bencode.dictionaryComparator,
+            "foo" to DecodingResult.StringResult("bar"),
+            "hello" to DecodingResult.NumberResult(52L)
+        )
+        bencodeDictionaryEquals(expected, bencode.decodeBencode("d3:foo3:bar5:helloi52ee"))
+    }
+
+    @Test
+    fun `decode empty dictionary`() = bencodeDictionaryEquals(
+        expected = emptyMap(),
+        decoded = bencode.decodeBencode("de"),
+    )
+
+    @Test
+    fun `decode complex values`() = bencodeDictionaryEquals(
+        expected = mapOf(
+            "spam" to listResultOf(
+                DecodingResult.StringResult("a"),
+                DecodingResult.StringResult("b"),
+            )
+        ),
+        decoded = bencode.decodeBencode("d4:spaml1:a1:bee")
+    )
+
+    @Test
+    fun `decode long values`() {
+        bencodeDictionaryEquals(
+            expected = mapOf(
+                "publisher" to DecodingResult.StringResult("bob"),
+                "publisher-webpage" to DecodingResult.StringResult("www.example.com"),
+                "publisher.location" to DecodingResult.StringResult("home")
+            ),
+            decoded = bencode.decodeBencode("d9:publisher3:bob17:publisher-webpage15:www.example.com18:publisher.location4:homee")
+        )
     }
 
 
@@ -70,7 +112,17 @@ class BencodeKtTest {
         }
     }
 
+    private fun bencodeDictionaryEquals(expected: Map<String, DecodingResult>, decoded: DecodingResult) {
+        assertInstanceOf<DecodingResult.DictionaryResult>(decoded).apply {
+            assertEquals(expected, value)
+        }
+    }
+
     private fun listResultOf(vararg results: DecodingResult): DecodingResult.ListResult {
         return DecodingResult.ListResult(results.toList())
+    }
+
+    private fun dictionaryResultOf(vararg pairs: Pair<String, DecodingResult>): DecodingResult.DictionaryResult {
+        return DecodingResult.DictionaryResult(sortedMapOf(comparator = bencode.dictionaryComparator, *pairs))
     }
 }
