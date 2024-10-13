@@ -48,6 +48,7 @@ class Bencode {
             res.add(decodeBencode(state))
         }
 
+        state.advance()
         return res
     }
 }
