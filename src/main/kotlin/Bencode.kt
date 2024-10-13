@@ -5,16 +5,16 @@ class Bencode {
         fun advance() = pos++
     }
 
-    fun decodeBencode(bencodedString: String): Any {
+    fun decodeBencode(bencodedString: String): DecodingResult {
         return decodeBencode(DecodingState(bencodedString))
     }
 
-    private fun decodeBencode(state: DecodingState): Any {
+    private fun decodeBencode(state: DecodingState): DecodingResult {
         val firstChar = state.bencodedString[state.pos]
         return when {
-            Character.isDigit(firstChar) -> decodeString(state)
-            firstChar == 'i' -> decodeNumber(state)
-            firstChar == 'l' -> decodeList(state)
+            Character.isDigit(firstChar) -> DecodingResult.StringResult(decodeString(state))
+            firstChar == 'i' -> DecodingResult.NumberResult(decodeNumber(state))
+            firstChar == 'l' -> DecodingResult.ListResult(decodeList(state))
 
             else -> {
                 println(state)
@@ -41,8 +41,8 @@ class Bencode {
         return numberSubstring.toLong()
     }
 
-    private fun decodeList(state: DecodingState): List<Any> {
-        val res = mutableListOf<Any>()
+    private fun decodeList(state: DecodingState): List<DecodingResult> {
+        val res = mutableListOf<DecodingResult>()
         state.advance()
         while (!state.isEnd() && state.current() != 'e') {
             res.add(decodeBencode(state))

@@ -1,4 +1,5 @@
 import com.google.gson.Gson
+
 // import com.dampcake.bencode.Bencode; - available if you need it!
 
 fun main(args: Array<String>) {
@@ -17,5 +18,5 @@ fun decode(encoded: String) {
     val bencode = Bencode()
     val gson = Gson()
     val decoded = bencode.decodeBencode(encoded)
-    println(gson.toJson(decoded))
+    println(gson.toJson(decoded.getValue()))
 }
