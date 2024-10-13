@@ -93,6 +93,21 @@ class BencodeKtTest {
         )
     }
 
+    @Test
+    fun `decode nested dictionaries`() = bencodeDictionaryEquals(
+        expected = mapOf(
+            "inner_dict" to dictionaryResultOf(
+                "key1" to DecodingResult.StringResult("value1"),
+                "key2" to DecodingResult.NumberResult(42),
+                "list_key" to listResultOf(
+                    DecodingResult.StringResult("item1"),
+                    DecodingResult.StringResult("item2"),
+                    DecodingResult.NumberResult(3)
+                )
+            )
+        ),
+        decoded = bencode.decodeBencode("d10:inner_dictd4:key16:value14:key2i42e8:list_keyl5:item15:item2i3eeee")
+    )
 
     private fun bencodeStringEquals(expected: String, decoded: DecodingResult) {
         assertInstanceOf<DecodingResult.StringResult>(decoded).apply {
@@ -123,6 +138,6 @@ class BencodeKtTest {
     }
 
     private fun dictionaryResultOf(vararg pairs: Pair<String, DecodingResult>): DecodingResult.DictionaryResult {
-        return DecodingResult.DictionaryResult(sortedMapOf(comparator = bencode.dictionaryComparator, *pairs))
+        return DecodingResult.DictionaryResult(mapOf(*pairs))
     }
 }

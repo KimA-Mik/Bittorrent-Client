@@ -6,7 +6,9 @@ class Bencode {
     }
 
     val dictionaryComparator = Comparator<String> { o1, o2 ->
-        return@Comparator compareValues(o1.length, o2.length)
+        if (o1.length != o2.length) return@Comparator compareValues(o1.length, o2.length)
+
+        return@Comparator compareValues(o1, o2)
     }
 
     fun decodeBencode(bencodedString: String): DecodingResult {
