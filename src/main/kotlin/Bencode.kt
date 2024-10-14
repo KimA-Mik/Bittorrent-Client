@@ -1,8 +1,22 @@
+import java.nio.ByteBuffer
+
+
 class Bencode {
-    private data class DecodingState(val bencodedString: String, var pos: Int = 0) {
-        fun isEnd() = pos >= bencodedString.length
-        fun current() = bencodedString[pos]
+    private data class DecodingState(val bencoded: ByteBuffer, var pos: Int = 0) {
+        fun isEnd() = pos >= bencoded.array().size
+        fun current() = bencoded.get(pos).convertToChar()
         fun advance() = pos++
+
+        fun nextIndexOf(char: Char): Int {
+            for (i in pos until bencoded.array().size) {
+                if (bencoded.get(i).convertToChar() == char) return i
+            }
+            return -1
+        }
+
+        fun substring(start: Int, end: Int): String {
+            return bencoded.array().decodeToString(start, end, false)
+        }
     }
 
     val dictionaryComparator = Comparator<String> { o1, o2 ->
@@ -11,12 +25,16 @@ class Bencode {
         return@Comparator compareValues(o1, o2)
     }
 
+    fun decodeBencode(bencoded: ByteArray): DecodingResult {
+        return decodeBencode(DecodingState(ByteBuffer.wrap(bencoded)))
+    }
+
     fun decodeBencode(bencodedString: String): DecodingResult {
-        return decodeBencode(DecodingState(bencodedString))
+        return decodeBencode(DecodingState(ByteBuffer.wrap(bencodedString.toByteArray())))
     }
 
     private fun decodeBencode(state: DecodingState): DecodingResult {
-        val firstChar = state.bencodedString[state.pos]
+        val firstChar = state.current()
         return when {
             Character.isDigit(firstChar) -> DecodingResult.StringResult(decodeString(state))
             firstChar == 'i' -> DecodingResult.NumberResult(decodeNumber(state))
@@ -31,16 +49,16 @@ class Bencode {
     }
 
     private fun decodeString(state: DecodingState): String {
-        val firstColonIndex = state.bencodedString.indexOf(char = ':', startIndex = state.pos)
-        val length = Integer.parseInt(state.bencodedString.substring(state.pos, firstColonIndex))
+        val firstColonIndex = state.nextIndexOf(char = ':')
+        val length = Integer.parseInt(state.substring(state.pos, firstColonIndex))
 
         state.pos = firstColonIndex + 1 + length
-        return state.bencodedString.substring(firstColonIndex + 1, state.pos)
+        return state.substring(firstColonIndex + 1, state.pos)
     }
 
     private fun decodeNumber(state: DecodingState): Long {
-        val endIndex = state.bencodedString.indexOf(char = 'e', startIndex = state.pos)
-        val numberSubstring = state.bencodedString.substring(state.pos + 1, endIndex)
+        val endIndex = state.nextIndexOf(char = 'e')
+        val numberSubstring = state.substring(state.pos + 1, endIndex)
         if (numberSubstring.length > 1 && numberSubstring[0] == '0') throw NumberFormatException()
         if (numberSubstring.startsWith("-0")) throw NumberFormatException()
 
