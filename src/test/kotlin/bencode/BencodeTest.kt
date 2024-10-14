@@ -1,9 +1,11 @@
+package bencode
+
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.api.assertThrows
 
-class BencodeKtTest {
+class BencodeTest {
     private val bencode = Bencode()
 
     @Test

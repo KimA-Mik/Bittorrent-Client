@@ -1,3 +1,5 @@
+package bencode
+
 sealed interface DecodingResult {
     @JvmInline
     value class StringResult(val value: String) : DecodingResult

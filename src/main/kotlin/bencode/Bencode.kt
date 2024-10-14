@@ -1,3 +1,6 @@
+package bencode
+
+import convertToChar
 import java.nio.ByteBuffer
 
 

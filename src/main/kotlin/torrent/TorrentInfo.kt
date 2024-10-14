@@ -1,3 +1,7 @@
+package torrent
+
+import bencode.DecodingResult
+
 data class TorrentInfo(
     //size of the file in bytes, for single-file torrents
     val length: Long,

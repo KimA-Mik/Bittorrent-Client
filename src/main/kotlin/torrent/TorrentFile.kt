@@ -1,3 +1,7 @@
+package torrent
+
+import bencode.DecodingResult
+
 data class TorrentFile(
     val trackerUrl: String,
     val info: TorrentInfo,
