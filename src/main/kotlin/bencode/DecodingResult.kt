@@ -1,8 +1,13 @@
 package bencode
 
 sealed interface DecodingResult {
-    @JvmInline
-    value class StringResult(val value: String) : DecodingResult
+    sealed interface StringResult : DecodingResult {
+        @JvmInline
+        value class Utf(val value: String) : StringResult
+
+        @JvmInline
+        value class Binary(val value: ByteArray) : StringResult
+    }
 
     @JvmInline
     value class NumberResult(val value: Long) : DecodingResult
@@ -17,7 +22,8 @@ sealed interface DecodingResult {
         return when (this) {
             is ListResult -> this.value.map(DecodingResult::getValue)
             is NumberResult -> this.value
-            is StringResult -> this.value
+            is StringResult.Utf -> this.value
+            is StringResult.Binary -> this.value
             is DictionaryResult -> this.value.mapValues { it.value.getValue() }
         }
     }

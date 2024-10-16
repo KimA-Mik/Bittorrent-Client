@@ -1,7 +1,10 @@
 import bencode.Bencode
+import bencode.Bencoder
 import bencode.DecodingResult
 import com.google.gson.Gson
+import org.apache.commons.codec.digest.DigestUtils
 import torrent.TorrentFile
+import torrent.TorrentFile.Companion.INFO_KEY
 import java.io.File
 
 fun main(args: Array<String>) {
@@ -43,6 +46,10 @@ fun info(filepath: String) {
         return
     }
 
+    val encoder = Bencoder()
+    val infoString = encoder.bencode(decoded.value[INFO_KEY]!!)
+
     println("Tracker URL: ${torrent.trackerUrl}")
     println("Length: ${torrent.info.length}")
+    println("Info Hash: ${DigestUtils.sha1Hex(infoString)}")
 }

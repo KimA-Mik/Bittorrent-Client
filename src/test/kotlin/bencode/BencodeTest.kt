@@ -10,8 +10,8 @@ class BencodeTest {
 
     @Test
     fun `decode string`() {
-        bencodeStringEquals("hello", bencode.decodeBencode("5:hello"))
-        bencodeStringEquals("world", bencode.decodeBencode("5:world123"))
+        bencodeUtfStringEquals("hello", bencode.decodeBencode("5:hello"))
+        bencodeUtfStringEquals("world", bencode.decodeBencode("5:world123"))
     }
 
     @Test
@@ -31,7 +31,7 @@ class BencodeTest {
     @Test
     fun `decode list`() {
         val expected = listOf(
-            DecodingResult.StringResult("hello"),
+            DecodingResult.StringResult.Utf("hello"),
             DecodingResult.NumberResult(52L)
         )
         bencodeListEquals(expected, bencode.decodeBencode("l5:helloi52ee"))
@@ -44,7 +44,7 @@ class BencodeTest {
     fun `decode nested list`() {
         var expected = listOf<DecodingResult>(
             listResultOf(
-                DecodingResult.NumberResult(435L), DecodingResult.StringResult("orange")
+                DecodingResult.NumberResult(435L), DecodingResult.StringResult.Utf("orange")
             )
         )
         bencodeListEquals(expected, bencode.decodeBencode("lli435e6:orangeee"))
@@ -59,8 +59,8 @@ class BencodeTest {
     @Test
     fun `decode dictionary`() {
         val expected = sortedMapOf(
-            comparator = bencode.dictionaryComparator,
-            "foo" to DecodingResult.StringResult("bar"),
+            comparator = Bencode.DICTIONARY_COMPARATOR,
+            "foo" to DecodingResult.StringResult.Utf("bar"),
             "hello" to DecodingResult.NumberResult(52L)
         )
         bencodeDictionaryEquals(expected, bencode.decodeBencode("d3:foo3:bar5:helloi52ee"))
@@ -76,8 +76,8 @@ class BencodeTest {
     fun `decode complex values`() = bencodeDictionaryEquals(
         expected = mapOf(
             "spam" to listResultOf(
-                DecodingResult.StringResult("a"),
-                DecodingResult.StringResult("b"),
+                DecodingResult.StringResult.Utf("a"),
+                DecodingResult.StringResult.Utf("b"),
             )
         ),
         decoded = bencode.decodeBencode("d4:spaml1:a1:bee")
@@ -87,9 +87,9 @@ class BencodeTest {
     fun `decode long values`() {
         bencodeDictionaryEquals(
             expected = mapOf(
-                "publisher" to DecodingResult.StringResult("bob"),
-                "publisher-webpage" to DecodingResult.StringResult("www.example.com"),
-                "publisher.location" to DecodingResult.StringResult("home")
+                "publisher" to DecodingResult.StringResult.Utf("bob"),
+                "publisher-webpage" to DecodingResult.StringResult.Utf("www.example.com"),
+                "publisher.location" to DecodingResult.StringResult.Utf("home")
             ),
             decoded = bencode.decodeBencode("d9:publisher3:bob17:publisher-webpage15:www.example.com18:publisher.location4:homee")
         )
@@ -99,11 +99,11 @@ class BencodeTest {
     fun `decode nested dictionaries`() = bencodeDictionaryEquals(
         expected = mapOf(
             "inner_dict" to dictionaryResultOf(
-                "key1" to DecodingResult.StringResult("value1"),
+                "key1" to DecodingResult.StringResult.Utf("value1"),
                 "key2" to DecodingResult.NumberResult(42),
                 "list_key" to listResultOf(
-                    DecodingResult.StringResult("item1"),
-                    DecodingResult.StringResult("item2"),
+                    DecodingResult.StringResult.Utf("item1"),
+                    DecodingResult.StringResult.Utf("item2"),
                     DecodingResult.NumberResult(3)
                 )
             )
@@ -111,8 +111,8 @@ class BencodeTest {
         decoded = bencode.decodeBencode("d10:inner_dictd4:key16:value14:key2i42e8:list_keyl5:item15:item2i3eeee")
     )
 
-    private fun bencodeStringEquals(expected: String, decoded: DecodingResult) {
-        assertInstanceOf<DecodingResult.StringResult>(decoded).apply {
+    private fun bencodeUtfStringEquals(expected: String, decoded: DecodingResult) {
+        assertInstanceOf<DecodingResult.StringResult.Utf>(decoded).apply {
             assertEquals(expected, value)
         }
     }

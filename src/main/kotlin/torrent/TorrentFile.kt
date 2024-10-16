@@ -9,7 +9,7 @@ data class TorrentFile(
     companion object {
         fun extract(dict: Map<String, DecodingResult>): TorrentFile? {
             val trackerUrlResult = dict[TORRENT_URL_KEY]
-            if (trackerUrlResult !is DecodingResult.StringResult) {
+            if (trackerUrlResult !is DecodingResult.StringResult.Utf) {
                 return null
             }
 
@@ -27,7 +27,7 @@ data class TorrentFile(
         }
 
         private const val TORRENT_URL_KEY = "announce"
-        private const val INFO_KEY = "info"
+        const val INFO_KEY = "info"
     }
 }
 

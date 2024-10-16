@@ -18,14 +18,12 @@ class Bencode {
         }
 
         fun substring(start: Int, end: Int): String {
-            return bencoded.array().decodeToString(start, end, false)
+            return bencoded.array().decodeToString(start, end, true)
         }
-    }
 
-    val dictionaryComparator = Comparator<String> { o1, o2 ->
-        if (o1.length != o2.length) return@Comparator compareValues(o1.length, o2.length)
-
-        return@Comparator compareValues(o1, o2)
+        fun slice(start: Int, end: Int): ByteArray {
+            return bencoded.array().sliceArray(start until end)
+        }
     }
 
     fun decodeBencode(bencoded: ByteArray): DecodingResult {
@@ -39,10 +37,10 @@ class Bencode {
     private fun decodeBencode(state: DecodingState): DecodingResult {
         val firstChar = state.current()
         return when {
-            Character.isDigit(firstChar) -> DecodingResult.StringResult(decodeString(state))
-            firstChar == 'i' -> DecodingResult.NumberResult(decodeNumber(state))
-            firstChar == 'l' -> DecodingResult.ListResult(decodeList(state))
-            firstChar == 'd' -> DecodingResult.DictionaryResult(decodeDictionary(state))
+            Character.isDigit(firstChar) -> decodeStringResult(state)
+            firstChar == BENCODED_NUMBER -> DecodingResult.NumberResult(decodeNumber(state))
+            firstChar == BENCODED_LIST -> DecodingResult.ListResult(decodeList(state))
+            firstChar == BENCODED_DICTIONARY -> DecodingResult.DictionaryResult(decodeDictionary(state))
 
             else -> {
                 println(state)
@@ -51,16 +49,33 @@ class Bencode {
         }
     }
 
-    private fun decodeString(state: DecodingState): String {
-        val firstColonIndex = state.nextIndexOf(char = ':')
+    private fun decodeStringResult(state: DecodingState): DecodingResult.StringResult {
+        return try {
+            DecodingResult.StringResult.Utf(tryDecodeString(state))
+        } catch (e: Exception) {
+            DecodingResult.StringResult.Binary(decodeStringToByteArray(state))
+        }
+    }
+
+    private fun tryDecodeString(state: DecodingState): String {
+        val firstColonIndex = state.nextIndexOf(char = BENCODED_DELIMITER)
+        val length = Integer.parseInt(state.substring(state.pos, firstColonIndex))
+
+        val str = state.substring(firstColonIndex + 1, firstColonIndex + 1 + length)
+        state.pos = firstColonIndex + 1 + length
+        return str
+    }
+
+    private fun decodeStringToByteArray(state: DecodingState): ByteArray {
+        val firstColonIndex = state.nextIndexOf(char = BENCODED_DELIMITER)
         val length = Integer.parseInt(state.substring(state.pos, firstColonIndex))
 
         state.pos = firstColonIndex + 1 + length
-        return state.substring(firstColonIndex + 1, state.pos)
+        return state.slice(firstColonIndex + 1, state.pos)
     }
 
     private fun decodeNumber(state: DecodingState): Long {
-        val endIndex = state.nextIndexOf(char = 'e')
+        val endIndex = state.nextIndexOf(char = BENCODED_END)
         val numberSubstring = state.substring(state.pos + 1, endIndex)
         if (numberSubstring.length > 1 && numberSubstring[0] == '0') throw NumberFormatException()
         if (numberSubstring.startsWith("-0")) throw NumberFormatException()
@@ -72,7 +87,7 @@ class Bencode {
     private fun decodeList(state: DecodingState): List<DecodingResult> {
         val res = mutableListOf<DecodingResult>()
         state.advance()
-        while (!state.isEnd() && state.current() != 'e') {
+        while (!state.isEnd() && state.current() != BENCODED_END) {
             res.add(decodeBencode(state))
         }
 
@@ -81,16 +96,22 @@ class Bencode {
     }
 
     private fun decodeDictionary(state: DecodingState): Map<String, DecodingResult> {
-        val res = sortedMapOf<String, DecodingResult>(dictionaryComparator)
+        val res = sortedMapOf<String, DecodingResult>(DICTIONARY_COMPARATOR)
         state.advance()
-        while (!state.isEnd() && state.current() != 'e') {
-            val key = decodeString(state)
+        while (!state.isEnd() && state.current() != BENCODED_END) {
+            val key = decodeStringToByteArray(state).decodeToString()
             val value = decodeBencode(state)
             res[key] = value
         }
 
         state.advance()
         return res
+    }
+
+    companion object {
+        val DICTIONARY_COMPARATOR = Comparator<String> { o1, o2 ->
+            return@Comparator compareValues(o1, o2)
+        }
     }
 }
 

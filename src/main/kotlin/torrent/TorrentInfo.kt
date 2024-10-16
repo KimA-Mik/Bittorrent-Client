@@ -16,7 +16,7 @@ data class TorrentInfo(
             }
 
             val nameResult = dict[NAME_KEY]
-            if (nameResult !is DecodingResult.StringResult) {
+            if (nameResult !is DecodingResult.StringResult.Utf) {
                 return null
             }
 
