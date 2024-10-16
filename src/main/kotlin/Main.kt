@@ -28,6 +28,7 @@ fun decode(encoded: String) {
     println(gson.toJson(decoded.getValue()))
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 fun info(filepath: String) {
     val file = File(filepath)
     if (!file.exists()) {
@@ -47,9 +48,14 @@ fun info(filepath: String) {
     }
 
     val encoder = Bencoder()
-    val infoString = encoder.bencode(decoded.value[INFO_KEY]!!)
+    val bencodedInfo = encoder.bencode(decoded.value[INFO_KEY]!!)
 
     println("Tracker URL: ${torrent.trackerUrl}")
     println("Length: ${torrent.info.length}")
-    println("Info Hash: ${DigestUtils.sha1Hex(infoString)}")
+    println("Info Hash: ${DigestUtils.sha1Hex(bencodedInfo)}")
+    println("Piece Length: ${torrent.info.pieceLength}")
+    println("Piece Hashes: ")
+    torrent.info.pieces.forEach {
+        println(it.toHexString(HexFormat.Default))
+    }
 }
